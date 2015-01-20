@@ -1,0 +1,9 @@
+轿车,http://bj.58.com/jingjijiaoche/
+越野车/SUV,http://bj.58.com/yeuyeche/
+MPV,http://bj.58.com/mpv/
+跑车,http://bj.58.com/paoche/
+客车,http://bj.58.com/keche/
+货车,http://bj.58.com/huoche/
+面包车,http://bj.58.com/mianbaoche/
+皮卡,http://bj.58.com/pika/
+工程车,http://bj.58.com/gongchengche/
