@@ -14,8 +14,10 @@ for var in ins:
     for i in range(0, 17):
         if not var[i:i+1].isdigit():
             inValidIns.append(var)
-            ins.remove(var)
+            # ins.remove(var)
             break
+for x in inValidIns:
+    ins.remove(x)
 # print "inValid ins : ", len(inValidIns)
 for v in ins:
     tmpSum = 0
