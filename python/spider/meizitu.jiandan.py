@@ -8,48 +8,74 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
 from pyquery import PyQuery
-import urllib2
+import urllib2, urllib
 import chardet
+import time
+import socket
 girls_url = r'http://jandan.net/ooxx'
 
 
-def process_info(all_pic):
+def process_info(all_pic, url):
     """
     抓取信息
     :return:信息（图片信息）
     """
-    url_request = urllib2.Request(girls_url, headers={'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/40.0.2214.111 Chrome/40.0.2214.111 Safari/537.36'})
-    page = urllib2.urlopen(url_request, timeout=10)
-    if page.getcode() != 200:
-        print 'url : %s;  status code: %d' % (girls_url, page.getcode())
-    page_obj = page.read()
+    url_request = urllib2.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/38.0.2125.122 Safari/537.36'})
+    try:
+        socket.setdefaulttimeout(20)  # 这里对整个socket层设置超时时间。后续文件中如果再使用到socket，不必再设置 
+        page = urllib2.urlopen(url_request)
+        page_obj = page.read()
+        page.close()
+    except socket.error:
+        print 'socket timeout ', url
+        try:
+            time.sleep(5)
+            # page = urllib2.urlopen(url_request)
+            # page_obj = page.read()
+            # page.close()
+            process_info(True, url)
+        except socket.timeout, e:
+            print 'socket timeout last'
     if isinstance(page_obj, str):
         page_obj = unicode(page_obj, chardet.detect(page_obj)['encoding'])
     html_pq = PyQuery(page_obj)('.commentlist li')
+    # 获取下一页URL
+    next_url = PyQuery(page_obj)('.previous-comment-page').attr['href']
     # 处理页面内容
+    print "the picture nums: ", len(html_pq)
     if len(html_pq) <= 1:
         print 'This is last page'
         return
     for i in range(len(html_pq)):
-        uploader = PyQuery.eq(i)('.author strong').text()
-        upload_time = PyQuery.eq(i)('.author small').text()
-        img_url = PyQuery.eq(i)('.text p img').attr['src']
-        vote_support = 'cos_support-'
-        vote_unsupport = 'cos_unsupport'
-        vote = PyQuery.eq(i)('.vote').attr['id']
+        uploader = html_pq.eq(i)('.author strong').text()
+        if not uploader:
+            continue
+        upload_time = html_pq.eq(i)('.author small').text()
+        img_url = html_pq.eq(i)('.text p img').attr['src']
+        vote_support = '#cos_support-'
+        vote_unsupport = '#cos_unsupport-'
+        vote = html_pq.eq(i)('.vote').attr['id']
         vote_id = str(vote)[5:].strip()
+        # print "vote id ", vote_id
         vote_support_id = vote_support+vote_id
-        vote_support_num = PyQuery.eq(i)('.vote')(vote_support_id).text()
         vote_unsupport_id = vote_unsupport + vote_id
-        vote_unsupport_num = PyQuery.eq(i)('.vote')(vote_unsupport_id).text()
+        # print "vote support %s un_support %s", (vote_support_id, vote_unsupport_id)
+        vote_support_num = html_pq.eq(i)('.vote ')(vote_support_id).text()
+        vote_unsupport_num = html_pq.eq(i)('.vote ')(vote_unsupport_id).text()
         # 判断时间是否合理
         is_today = False
         # 存储信息
+        out_info = '%s, %s, %s, %s, %s' % (uploader, upload_time, img_url, vote_support_num, vote_unsupport_num)
+        fw.write(out_info+"\n")
+        print out_info
     #是否要递归
+    if all_pic and next_url:
+        time.sleep(1)
+        print "next url is : ", next_url
+        process_info(True, next_url)
 
 
-
-def save_info():
+def save_info_by_db():
     """
     保存至美女图表
     :return:
@@ -62,6 +88,9 @@ def main():
     控制
     :return:
     """
-    pass
+    global fw
+    fw = open("../result/comment_meizhitu.txt", 'w+')
+    process_info(True, girls_url)
+    fw.close()
 if __name__ == '__main__':
     main()
