@@ -7,6 +7,7 @@
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
+sys.setrecursionlimit(100000)
 from pyquery import PyQuery
 import urllib2, urllib
 import chardet
@@ -34,6 +35,7 @@ def process_info(all_pic, url):
             # page_obj = page.read()
             # page.close()
             process_info(True, url)
+            return
         except socket.timeout, e:
             print 'socket timeout last'
     if isinstance(page_obj, str):
