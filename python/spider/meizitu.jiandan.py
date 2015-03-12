@@ -13,6 +13,7 @@ import urllib2, urllib
 import chardet
 import time
 import socket
+import mysql.connector
 girls_url = r'http://jandan.net/ooxx'
 
 
@@ -37,7 +38,35 @@ def process_info(all_pic, url):
             process_info(True, url)
             return
         except socket.timeout, e:
-            print 'socket timeout last'
+            print 'socket timeout , url failed : %' % url
+        except urllib2.URLError, e:
+            print e.reason
+            print 'urlopen error : url %s' % url
+            time.sleep(4)
+            page = urllib2.urlopen(url_request)
+            page_obj = page.read()
+            page.close()
+        except urllib2.HTTPError, e:
+            print e.reason
+            print 'http error url :%s' % url
+            time.sleep(4)
+            page = urllib2.urlopen(url_request)
+            page_obj = page.read()
+            page.close()
+    except urllib2.HTTPError, e:
+        print e.reason
+        print 'http error url :%s' % url
+        time.sleep(4)
+        page = urllib2.urlopen(url_request)
+        page_obj = page.read()
+        page.close()
+
+    except urllib2.URLError, e:
+        print e.reason
+        time.sleep(4)
+        page = urllib2.urlopen(url_request)
+        page_obj = page.read()
+        page.close()
     if isinstance(page_obj, str):
         page_obj = unicode(page_obj, chardet.detect(page_obj)['encoding'])
     html_pq = PyQuery(page_obj)('.commentlist li')
@@ -70,7 +99,7 @@ def process_info(all_pic, url):
         out_info = '%s, %s, %s, %s, %s' % (uploader, upload_time, img_url, vote_support_num, vote_unsupport_num)
         fw.write(out_info+"\n")
         print out_info
-    #是否要递归
+    # 是否要递归
     if all_pic and next_url:
         time.sleep(1)
         print "next url is : ", next_url
@@ -82,7 +111,28 @@ def save_info_by_db():
     保存至美女图表
     :return:
     """
-    pass
+    fr = open('../result/comment_meizhitu.txt', 'r')
+    config = {
+        'user': 'root',
+        'password': 'root',
+        'host': '127.0.0.1',
+        'port': '3306',
+        'database': 'spider'
+    }
+    # try:
+    cnx = mysql.connector.connect(**config)
+    cursor = cnx.cursor()
+    for line in fr:
+        line = line.rstrip('\n')
+        line = unicode(line, chardet.detect(line)['encoding']).encode('utf-8')
+        add_xxoo = 'insert into xxoo_jiandan (uploader, uploader_time, img_url, support_num, un_support_num) VALUES (%s, %s, %s, %s, %s)'
+        print (add_xxoo, line.split(','))
+        cursor.execute(add_xxoo, line.split(','))
+    cnx.commit()
+    cursor.close()
+    # except mysql.connector.Error as err:
+    #     print err.message
+    fr.close()
 
 
 def main():
@@ -90,9 +140,11 @@ def main():
     控制
     :return:
     """
-    global fw
-    fw = open("../result/comment_meizhitu.txt", 'w+')
-    process_info(True, girls_url)
-    fw.close()
+    # next_url = r'http://jandan.net/ooxx/page-1113#comments'
+    # global fw
+    # fw = open("../result/comment_meizhitu_1.txt", 'w+')
+    # process_info(True, next_url)
+    # fw.close()
+    save_info_by_db()
 if __name__ == '__main__':
     main()
