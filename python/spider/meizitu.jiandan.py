@@ -4,6 +4,7 @@
 
 # 将妹子图专栏下载的信息存入输入库
 # 所存字段： 上传者， 图片地址， 圈圈/支持， 叉叉/反对， 吐曹（暂时不收集 -不好收集）
+# update time :20150320 - pageNum: 1354
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -17,7 +18,7 @@ import mysql.connector
 girls_url = r'http://jandan.net/ooxx'
 
 
-def process_info(all_pic, url):
+def process_info(url, endPageNum):
     """
     抓取信息
     :return:信息（图片信息）
@@ -93,17 +94,80 @@ def process_info(all_pic, url):
         # print "vote support %s un_support %s", (vote_support_id, vote_unsupport_id)
         vote_support_num = html_pq.eq(i)('.vote ')(vote_support_id).text()
         vote_unsupport_num = html_pq.eq(i)('.vote ')(vote_unsupport_id).text()
-        # 判断时间是否合理
-        is_today = False
+        # 判断图片是否存在
+        has_img = is_existed(str(img_url).split())
+        print 'has image %s' % has_img
         # 存储信息
-        out_info = '%s, %s, %s, %s, %s' % (uploader, upload_time, img_url, vote_support_num, vote_unsupport_num)
-        fw.write(out_info+"\n")
+        out_info = '%s, %s, %s, %s, %s' % ("'"+uploader+"'", "'"+upload_time+"'", "'"+img_url+"'", vote_support_num, vote_unsupport_num)
         print out_info
+        if not has_img:
+            save2db(out_info)
+
+        # fw.write(out_info+"\n")
     # 是否要递归
-    if all_pic and next_url:
+
+    if next_url and int(next_url[next_url.index('-')+1:next_url.index('#')]) > int(endPageNum):
         time.sleep(1)
         print "next url is : ", next_url
-        process_info(True, next_url)
+        process_info(next_url, endPageNum)
+
+
+def is_existed(img_url):
+    """
+    img 在mysql中是否存在
+    :param img:
+    :return:
+    """
+    config = {
+        'user': 'root',
+        'password': 'root',
+        'host': '127.0.0.1',
+        'port': 3306,
+        'database': 'spider'
+    }
+    try:
+        # print img_url[0]
+        cnx = mysql.connector.connect(**config)
+        cursor = cnx.cursor()
+        select_sql = ("SELECT id FROM xxoo_jiandan WHERE img_url =%s")
+        cursor.execute(select_sql % str("'"+img_url[0]+"'"))
+        if len(cursor.fetchall()):
+            return True
+        else:
+            return False
+    except mysql.connector.Error, e:
+        print e
+        return False
+
+
+def save2db(img_info):
+    """
+    save to mysql
+    :return:
+    """
+    config = {
+        'user': 'root',
+        'password': 'root',
+        'host': '127.0.0.1',
+        'port': 3306,
+        'database': 'spider'
+    }
+    if not img_info:
+        return
+    try:
+        add_xxoo = "insert into xxoo_jiandan (uploader, uploader_time, img_url, support_num, un_support_num) VALUES (%s, %s, %s, %s, %s)"
+        insert_sql = add_xxoo % tuple(img_info.split(','))
+        print insert_sql
+    #   persistence data
+        cnx = mysql.connector.connect(**config)
+        cursor = cnx.cursor()
+        cursor.execute(insert_sql)
+        cnx.commit()
+    except mysql.connector.Error, e:
+        print e
+    finally:
+        # cnx.close()
+        return
 
 
 def save_info_by_db():
@@ -140,11 +204,13 @@ def main():
     控制
     :return:
     """
-    # next_url = r'http://jandan.net/ooxx/page-1113#comments'
+    next_url = r'http://jandan.net/ooxx/page-1350#comments'
     # global fw
     # fw = open("../result/comment_meizhitu_1.txt", 'w+')
-    # process_info(True, next_url)
+    process_info(next_url, 1354)
     # fw.close()
-    save_info_by_db()
+    # save_info_by_db()
+
+    # print is_existed(r' http://ww3.sinaimg.cn/mw600/005UDDlRjw1eq25qzjhyuj30zk0nnmzo.jpg')
 if __name__ == '__main__':
     main()
