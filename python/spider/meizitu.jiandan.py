@@ -4,7 +4,7 @@
 
 # 将妹子图专栏下载的信息存入输入库
 # 所存字段： 上传者， 图片地址， 圈圈/支持， 叉叉/反对， 吐曹（暂时不收集 -不好收集）
-# update time :20150320 - pageNum: 1354
+# update time :20150320 - pageNum: 1363
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -36,7 +36,7 @@ def process_info(url, endPageNum):
             # page = urllib2.urlopen(url_request)
             # page_obj = page.read()
             # page.close()
-            process_info(True, url)
+            process_info(url, endPageNum)
             return
         except socket.timeout, e:
             print 'socket timeout , url failed : %' % url
@@ -204,10 +204,10 @@ def main():
     控制
     :return:
     """
-    next_url = r'http://jandan.net/ooxx/page-1350#comments'
+    next_url = r'http://jandan.net/ooxx'
     # global fw
     # fw = open("../result/comment_meizhitu_1.txt", 'w+')
-    process_info(next_url, 1354)
+    process_info(next_url, 1363)
     # fw.close()
     # save_info_by_db()
 
