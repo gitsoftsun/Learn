@@ -4,7 +4,7 @@
 
 # 将妹子图专栏下载的信息存入输入库
 # 所存字段： 上传者， 图片地址， 圈圈/支持， 叉叉/反对， 吐曹（暂时不收集 -不好收集）
-# update time :20150320 - pageNum: 1363
+# update time :20150320 - pageNum: 1373
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -207,7 +207,7 @@ def main():
     next_url = r'http://jandan.net/ooxx'
     # global fw
     # fw = open("../result/comment_meizhitu_1.txt", 'w+')
-    process_info(next_url, 1363)
+    process_info(next_url, 1373)
     # fw.close()
     # save_info_by_db()
 

@@ -3,12 +3,14 @@ __author__ = 'Lzy_pc'
 # 抓取上海不限地区抓取50页就不再抓取
 import urllib2
 import time
+from pyquery import PyQuery
 
 
 class dianping:
     """
         点评数据抓取
     """
+    page_index = 1
     def process_url(self, url):
         print "url %s starting" % url
         url_req = urllib2.Request(url)
@@ -20,6 +22,7 @@ class dianping:
             # call html_process method
             self.html_process(html)
             # judge hasNextPage
+		
             next_url = self.hasNextPage(html)
             if next_url:
                 time.sleep(1)
@@ -28,15 +31,25 @@ class dianping:
                 return
         except urllib2.URLError, e:
             print(e.reason)
-            print "process url end"
+    print "process url end"
 
     def hasNextPage(self, html):
         """
         判断是否有下一页
+	判断条件是： page_index == 49 终止
         :param html:
         :return: next_url / None
         """
-        return None
+	part_next_url = r'http://t.dianping.com/list/shanghai-category_1?pageIndex='
+	#pq_obj = PyQuery(html)('.tg-paginator-next')
+	#tag_a_len = len(pq_obj)
+	#print 'length of tag : %d' % tag_a_len
+	if page_index == 49:
+          return False
+	else:
+	  next_url = part_next_url + str(page_index)
+	  page_index += 1
+	  return next_url
 
     def html_process(self, html):
         """
